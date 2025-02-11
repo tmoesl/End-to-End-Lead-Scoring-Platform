@@ -1,0 +1,46 @@
+name: ml-app
+services:
+  backend:
+    image: tmoesl/lead-conversion-prediction:backend-1.0
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"  # Bind backend to localhost (inside EC2 only)
+    volumes:
+      - ./model/model.pkl:/app/model/model.pkl
+      - ./src/config.py:/app/src/config.py
+    restart: always
+    networks:
+      - ml-network
+    container_name: backend
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: tmoesl/lead-conversion-prediction:frontend-1.0
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"  # Publicly exposed
+    volumes:
+      - ./src/config.py:/app/src/config.py
+      - ./frontend/utils/lcp_banner.png:/app/utils/lcp_banner.png
+    environment:
+      - FASTAPI_URL=http://backend:8000/predict/  # Frontend calls backend using service name
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    networks:
+      - ml-network
+    container_name: frontend
+
+networks:
+  ml-network:
+    driver: bridge
