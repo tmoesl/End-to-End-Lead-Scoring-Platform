@@ -1,11 +1,12 @@
-# ---------------------- FastAPI Application ------------------------------- #
-# # Author: Thomas Moesl
+# -------------------------------------------------------------------------- #
+# Title: FastAPI Application for ML Model
+# Description: This file contains the FastAPI application for the ML model.
+# Author: Thomas Moesl
 # Date: February 2025
-# Description: FastAPI app for making predictions using a trained model
 # -------------------------------------------------------------------------- #
 
 
-# ---------------- Import Libraries ---------------- #
+# ------------------ Import Libraries ------------------ #
 # Import the required libraries
 from fastapi import FastAPI, HTTPException
 from typing import List
@@ -13,15 +14,21 @@ import pandas as pd
 import pickle
 import logging
 from pydantic import ValidationError
-from src.config import PredictRequest  # Import the PredictRequest class
 
-# ---------------- Logging --------------------- #
+
+# ------------------ Import Custom Modules ------------- #
+# Import the PredictRequest class
+from src.config import PredictRequest
+
+
+# ------------------ Logging --------------------------- #
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ---------------- Load Model ------------------ #
-# # Load model from mounted volume
+
+# ------------------ Load Model ------------------------ #
+# Load model from mounted volume
 try:
     with open("/app/model/model.pkl", "rb") as f:
         model = pickle.load(f)
@@ -30,7 +37,7 @@ except Exception as e:
     raise
 
 
-# ---------------- FastAPI App ----------------- #
+# ------------------ FastAPI App ----------------------- #
 # Initialize FastAPI app
 app = FastAPI()
 
@@ -51,6 +58,10 @@ def predict(request: List[PredictRequest]):
 
         # Make prediction
         prediction = model.predict(input_data)
+        probability = model.predict_proba(input_data)
+
+        # Round probability to 3 decimal places
+        probability = probability.round(3)
 
         # Logging
         # logger.info("Model expects columns: %s", model.feature_names_in_)
@@ -58,7 +69,7 @@ def predict(request: List[PredictRequest]):
         # logger.info("Input data: %s", input_data)
         # logger.info("Prediction: %s", prediction)
 
-        return {"prediction": prediction.tolist()}
+        return {"prediction": prediction.tolist(), "probability": probability.tolist()}
 
     except ValidationError as ve:
         logger.error("Validation error: %s", ve)
@@ -71,13 +82,3 @@ def predict(request: List[PredictRequest]):
 
 # -------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------- #
-
-# ---------------- Additional Code Snippets ---- #
-
-# with open("scaler.pkl", "rb") as scaler_file:
-#     scaler = pickle.load(scaler_file)
-
-# Scale numerical features
-# numerical_features = input_data.select_dtypes(include=[np.number]).columns
-
-# input_data[numerical_features] = scaler.transform(input_data[numerical_features])

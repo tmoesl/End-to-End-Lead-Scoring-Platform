@@ -1,5 +1,5 @@
-fastapi
-uvicorn
-pandas
+fastapi==0.115.8
+uvicorn==0.34.0
+pandas==2.2.3
 scikit-learn==1.5.2
-pydantic
+pydantic==2.10.6
