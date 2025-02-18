@@ -1,19 +1,21 @@
+version: "3.9"
+
 name: ml-app
 services:
   backend:
     image: tmoesl/lcp-backend:1.0
     build:
-      context: ./backend
+      context: ./app/backend
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:8000:8000"  # Bind backend to localhost (inside EC2 only)
     volumes:
       - type: bind
-        source: ./model/model.pkl
+        source: ./app/model/model.pkl
         target: /app/model/model.pkl
         read_only: true
       - type: bind
-        source: ./src/config.py
+        source: ./app/src/config.py
         target: /app/src/config.py
         read_only: true
     healthcheck:
@@ -31,21 +33,21 @@ services:
   frontend:
     image: tmoesl/lcp-frontend:1.0
     build: 
-      context: ./frontend
+      context: ./app/frontend
       dockerfile: Dockerfile
     ports:
       - "8501:8501"  # Publicly exposed
     volumes:
       - type: bind
-        source: ./src
+        source: ./app/src
         target: /app/src
         read_only: true
       - type: bind
-        source: ./frontend/utils/lcp_banner.png
+        source: ./app/frontend/utils/lcp_banner.png
         target: /app/utils/lcp_banner.png
         read_only: true
       - type: bind
-        source: ./.streamlit
+        source: ./app/.streamlit
         target: /root/.streamlit
         read_only: true
     environment:
