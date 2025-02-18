@@ -167,85 +167,83 @@ if input_method == "Upload JSON":
         except ValidationError as e:
             st.error(f"Validation error: {e}")
 
-    else:
-        st.info("Please upload a JSON file.")
-
     # Button to make prediction
     if st.button("Predict"):
         if data_to_send is None:
-            st.warning("Please upload a valid JSON file.")
-            st.stop()
-
-        try:
-            response = requests.post(
-                FASTAPI_URL,
-                json=data_to_send,
-                timeout=10,
-            )
-            if response.status_code == 200:
-                prediction = response.json().get("prediction")
-                probability = response.json().get("probability")
-                st.success("Prediction successful!")
-
-                # Display distribution of predictions
-                prediction_series = pd.Series(prediction)
-                value_counts = prediction_series.value_counts().to_dict()
-
-                # Calculate percentages
-                total_count = len(prediction)
-                total = sum(value_counts.values())
-                percentage_0 = value_counts.get(0, 0) / total * 100
-                percentage_1 = value_counts.get(1, 0) / total * 100
-
-                st.markdown(
-                    f"""
-                    <div class="custom-card">
-                        <div class="custom-title">Distribution of Predictions</div>
-                        <div class="custom-subtitle">Leads are likely to:</div>
-                        <div style="display: flex; justify-content: center; gap: 100px;">
-                            <div style="text-align: center;">
-                                <span class="not-convert">NOT CONVERT</span>
-                                <div style="font-size: 24px; margin-top: 10px;">
-                                    {value_counts[0]} ({percentage_0:.1f}%)
-                                </div>
-                            </div>
-                            <div style="text-align: center;">
-                                <span class="convert">CONVERT</span>
-                                <div style="font-size: 24px; margin-top: 10px;">
-                                    {value_counts[1]} ({percentage_1:.1f}%)
-                                </div>
-                            </div>
-                        </div>
-                        </br>
-                        <div style="text-align: center; 
-                                font-size: 20px;
-                                font-style: italic;
-                                color: var(--text-color);
-                                margin-bottom: 10px;">
-                            Total number of predictions: {total_count}
-                        </div>
-                    </div>
-                    <br>
-                    """,
-                    unsafe_allow_html=True,
+            st.info("Please upload a valid JSON file.")
+        else:
+            try:
+                response = requests.post(
+                    FASTAPI_URL,
+                    json=data_to_send,
+                    timeout=10,
                 )
+                if response.status_code == 200:
+                    prediction = response.json().get("prediction")
+                    probability = response.json().get("probability")
+                    st.success("Prediction successful!")
 
-                # Create a DataFrame with input data, predictions and probabilities
-                results_df = combine_data(data_to_send, prediction, probability)
+                    # Display distribution of predictions
+                    prediction_series = pd.Series(prediction)
+                    value_counts = prediction_series.value_counts().to_dict()
 
-                with st.expander("See prediction output and associated probability"):
-                    # Display the table
-                    st.write(results_df.loc[:, ["prediction", "probability"]])
+                    # Calculate percentages
+                    total_count = len(prediction)
+                    total = sum(value_counts.values())
+                    percentage_0 = value_counts.get(0, 0) / total * 100
+                    percentage_1 = value_counts.get(1, 0) / total * 100
 
-                # Export data to CSV or JSON
-                export_file_csv, export_file_json = export_data(results_df)
-                show_export_buttons(export_file_csv, export_file_json)
+                    st.markdown(
+                        f"""
+                        <div class="custom-card">
+                            <div class="custom-title">Distribution of Predictions</div>
+                            <div class="custom-subtitle">Leads are likely to:</div>
+                            <div style="display: flex; justify-content: center; gap: 100px;">
+                                <div style="text-align: center;">
+                                    <span class="not-convert">NOT CONVERT</span>
+                                    <div style="font-size: 24px; margin-top: 10px;">
+                                        {value_counts[0]} ({percentage_0:.1f}%)
+                                    </div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <span class="convert">CONVERT</span>
+                                    <div style="font-size: 24px; margin-top: 10px;">
+                                        {value_counts[1]} ({percentage_1:.1f}%)
+                                    </div>
+                                </div>
+                            </div>
+                            </br>
+                            <div style="text-align: center; 
+                                    font-size: 20px;
+                                    font-style: italic;
+                                    color: var(--text-color);
+                                    margin-bottom: 10px;">
+                                Total number of predictions: {total_count}
+                            </div>
+                        </div>
+                        <br>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
-            else:
-                st.error(f"Error in prediction: {response.status_code}")
+                    # Create a DataFrame with input data, predictions and probabilities
+                    results_df = combine_data(data_to_send, prediction, probability)
 
-        except requests.exceptions.RequestException as e:
-            st.error(f"Backend API request error: {e}")
+                    with st.expander(
+                        "See prediction output and associated probability"
+                    ):
+                        # Display the table
+                        st.write(results_df.loc[:, ["prediction", "probability"]])
+
+                    # Export data to CSV or JSON
+                    export_file_csv, export_file_json = export_data(results_df)
+                    show_export_buttons(export_file_csv, export_file_json)
+
+                else:
+                    st.error(f"Error in prediction: {response.status_code}")
+
+            except requests.exceptions.RequestException as e:
+                st.error(f"Backend API request error: {e}")
 else:
     # --- Numerical Inputs --- #
     age = st.number_input(
