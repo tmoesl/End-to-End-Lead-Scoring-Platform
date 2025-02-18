@@ -1,15 +1,17 @@
-# ---------------------- Configuration File -------------------------------- #
+# -------------------------------------------------------------------------- #
+# Title: Pydantic Model for Request Body
+# Description: Definition of Pydantic model for request body
 # Author: Thomas Moesl
 # Date: February 2025
-# Description: Definition of Pydantic model for request body
 # -------------------------------------------------------------------------- #
 
-# ---------------- Import Libraries ---------------- #
+
+# ------------------ Import Libraries ------------------ #
 # Import the required libraries
 from pydantic import BaseModel, Field
 
 
-# ---------------- Pydantic Model ------------------ #
+# ------------------ Pydantic Model --------------------- #
 # Define Pydantic model for request body
 class PredictRequest(BaseModel):
     age: int = Field(ge=0, le=100)
