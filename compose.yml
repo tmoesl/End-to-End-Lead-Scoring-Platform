@@ -1,42 +1,59 @@
 name: ml-app
 services:
   backend:
-    image: tmoesl/lead-conversion-prediction:backend-1.0
+    image: tmoesl/lcp-backend:1.0
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:8000:8000"  # Bind backend to localhost (inside EC2 only)
     volumes:
-      - ./model/model.pkl:/app/model/model.pkl
-      - ./src/config.py:/app/src/config.py
-    restart: always
-    networks:
-      - ml-network
-    container_name: backend
-    
+      - type: bind
+        source: ./model/model.pkl
+        target: /app/model/model.pkl
+        read_only: true
+      - type: bind
+        source: ./src/config.py
+        target: /app/src/config.py
+        read_only: true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    restart: unless-stopped
+    networks:
+      - ml-network
+    container_name: backend
+    
+
 
   frontend:
-    image: tmoesl/lead-conversion-prediction:frontend-1.0
+    image: tmoesl/lcp-frontend:1.0
     build: 
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "8501:8501"  # Publicly exposed
     volumes:
-      - ./src/config.py:/app/src/config.py
-      - ./frontend/utils/lcp_banner.png:/app/utils/lcp_banner.png
+      - type: bind
+        source: ./src
+        target: /app/src
+        read_only: true
+      - type: bind
+        source: ./frontend/utils/lcp_banner.png
+        target: /app/utils/lcp_banner.png
+        read_only: true
+      - type: bind
+        source: ./.streamlit
+        target: /root/.streamlit
+        read_only: true
     environment:
       - FASTAPI_URL=http://backend:8000/predict/  # Frontend calls backend using service name
     depends_on:
       backend:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
     networks:
       - ml-network
     container_name: frontend
@@ -44,3 +61,4 @@ services:
 networks:
   ml-network:
     driver: bridge
+    name: ml-network
