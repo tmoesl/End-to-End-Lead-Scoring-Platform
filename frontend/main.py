@@ -1,105 +1,85 @@
 # ------------------ Streamlit App for ML Model Prediction ----------------- #
+# Title: Streamlit App for ML Model Prediction
+# Description: App to interact with a trained Random Forest model via FastAPI.
 # Author: Thomas Moesl
 # Date: February 2025
-# Description: App to interact with a trained Random Forest model via FastAPI.
 # -------------------------------------------------------------------------- #
 
 
 # ------------------ Import Libraries ------------------ #
 # Import the required libraries
 import os
+import json
 import streamlit as st
 import requests
-import json
 import pandas as pd
-import datetime
 from pydantic import ValidationError
-from src.config import PredictRequest  # Import the PredictRequest class
 
-
-# ------------------ Utility Functions ----------------- #
-# Function to export input data and predictions to CSV
-def export_to_csv(input_data, predictions):
-    try:
-        df = pd.DataFrame(input_data)
-        df["prediction"] = predictions
-        return df.to_csv(index=True, index_label="index")
-    except Exception as e:
-        st.error(f"Error exporting to CSV: {e}")
-        return None
+# ------------------ Import Custom Modules ------------- #
+# Import class, style configuration and utility functions
+from src.config import PredictRequest
+from src.style import STYLE_CONFIG, init_page_style, display_divider, display_footer
+from src.utils import combine_data, export_data, show_export_buttons
 
 
 # ------------------ FastAPI Endpoint ------------------ #
 # Define the FastAPI endpoint
-# Define the FastAPI endpoint (default: fallback for local development without Docker)
-FASTAPI_URL = os.getenv("FASTAPI_URL", "http://localhost:8000/predict/")
+FASTAPI_URL = os.getenv("FASTAPI_URL", "http://backend:8000/predict/")
+
+
+# ------------------ Page Configuration ---------------- #
+# Extract style configuration
+convert_color = STYLE_CONFIG["CONVERT_COLOR"]
+not_convert_color = STYLE_CONFIG["NOT_CONVERT_COLOR"]
+line_color = STYLE_CONFIG["LINE_COLOR"]
+
+# Initialize page styling
+init_page_style()
+
 
 # ------------------ Streamlit App --------------------- #
-# Set page style
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
-
-    html, body, [class*="css"]  {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Adjust text sizes */
-    h1 { font-size: 34px !important; }  /* Title size (1.4x h2) */
-    h2 { font-size: 26px !important; }  /* Subtitle size (1.3x h3) */
-    h3 { font-size: 22px !important; }  /* Section heading */
-    p, li, div { font-size: 18px !important; }  /* Body text */
-
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 # Title
 st.title("ML Model | Lead Conversion Prediction")
 
-# Banner image
+# Image
 try:
     st.image("/app/utils/lcp_banner.png")  # Load image from mounted volume
 except Exception as e:
     st.error(f"Error loading banner image: {e}")
 
-# Description of the app
+# Description
 st.markdown(
     """
-This app utilizes an optimized Random Forest model to predict lead conversion for an EdTech startup, 
-helping prioritize high-potential leads. By identifying key conversion drivers—such as website engagement,
-initial interaction channels, and profile completion—the model enables data-driven resource allocation to 
-boost conversion rates and optimize marketing strategies.
+    This app utilizes an optimized Random Forest model to predict lead conversion for an EdTech startup,
+    helping prioritize high-potential leads. By identifying key conversion drivers—such as website
+    engagement, initial interaction channels, and profile completion—the model enables data-driven
+    resource allocation to boost conversion rates and optimize marketing strategies.
 
-#### App Features
-- **Input Lead Data**: Enter lead details manually or upload a JSON file.
-- **Make API Requests**: The app sends the input data to a trained Random Forest model.
-- **Generate Predictions**: The model analyzes lead data to assess conversion potential.
-- **Export Results**: Save predictions as a CSV file for further analysis and decision-making.
-"""
-)
+    ## App Features
+    - **Input Lead Data**: Enter lead details manually or upload a JSON file.
+    - **Make API Requests**: The app sends the input data to a trained Random Forest model.
+    - **Generate Predictions**: The model analyses lead data to assess conversion potential.
+    - **Export Results**: Save predictions as a CSV file for further analysis and decision-making.
 
-# Legend for prediction values
-st.markdown(
-    """
-    <div style="color: white; background-color: #2E2F38; padding: 10px; border-radius: 5px; border: 1px solid white;">
-        <strong>Model Output</strong>
-        <ul>
-            <li><strong>0</strong>: Low Conversion Potential – Lower priority for follow-up.</li>
-            <li><strong>1</strong>: High Conversion Potential – Prioritize for engagement.</li>
-        </ul>
-    </div>
+    ## Business Impact
+    - **Enhanced Lead Prioritization**: Focus on high-conversion leads to maximize ROI.
+    - **Optimized Marketing Strategies**: Tailor campaigns based on key conversion drivers.
+    - **Data-Driven Decision-Making**: Leverage insights to refine sales and marketing efforts.
+
+    ## Instructions
+    1. Select the method of data input: manual input or JSON file upload.
+    2. Enter lead details or upload a JSON file containing multiple leads.
+    3. Click the 'Predict' button to generate conversion predictions.
+    4. View the prediction results and export the data for further analysis.
     """,
     unsafe_allow_html=True,
 )
 
 # Horizontal line
-st.markdown("<hr style='border: 1px solid white;'>", unsafe_allow_html=True)
+display_divider()
 
 # Select Data Input Method
-st.markdown("#### Select Data Input Method")
+st.markdown("## Select Data Input Method")
 
 input_method = st.radio(
     "Enter data manually or upload a JSON file:",
@@ -153,9 +133,13 @@ if input_method == "Upload JSON":
         st.code(json.dumps(sample_json, indent=4), language="json")
 
 # Horizontal line
-st.markdown("<hr style='border: 1px solid white;'>", unsafe_allow_html=True)
+display_divider()
 
 if input_method == "Upload JSON":
+
+    # Ensure data_to_send is initialized
+    data_to_send = None
+
     # File uploader for JSON input
     uploaded_file = st.file_uploader("Choose a JSON file", type="json")
 
@@ -188,40 +172,80 @@ if input_method == "Upload JSON":
 
     # Button to make prediction
     if st.button("Predict"):
-        response = requests.post(
-            FASTAPI_URL,
-            json=data_to_send,
-            timeout=10,
-        )
-        if response.status_code == 200:
-            prediction = response.json().get("prediction")
-            st.success("Prediction successful!")
+        if data_to_send is None:
+            st.warning("Please upload a valid JSON file.")
+            st.stop()
 
-            # Display distribution of predictions
-            prediction_series = pd.Series(prediction)
-            value_counts = prediction_series.value_counts().sort_index()
-
-            # Display total number of predictions
-            total_count = len(prediction)
-            st.write(f"Total Number: {total_count}")
-
-            chart = st.bar_chart(value_counts)
-
-            with st.expander("See detailed prediction output"):
-                st.write(f"{prediction}")
-
-            # Export input data and predictions to CSV
-            csv = export_to_csv(data_to_send, prediction)
-            st.download_button(
-                label="Download data as CSV",
-                data=csv,
-                file_name="predictions.csv",
-                mime="text/csv",
+        try:
+            response = requests.post(
+                FASTAPI_URL,
+                json=data_to_send,
+                timeout=10,
             )
+            if response.status_code == 200:
+                prediction = response.json().get("prediction")
+                probability = response.json().get("probability")
+                st.success("Prediction successful!")
 
-        else:
-            st.error(f"Error in prediction: {response.status_code}")
+                # Display distribution of predictions
+                prediction_series = pd.Series(prediction)
+                value_counts = prediction_series.value_counts().to_dict()
 
+                # Calculate percentages
+                total_count = len(prediction)
+                total = sum(value_counts.values())
+                percentage_0 = value_counts.get(0, 0) / total * 100
+                percentage_1 = value_counts.get(1, 0) / total * 100
+
+                st.markdown(
+                    f"""
+                    <div class="custom-card">
+                        <div class="custom-title">Distribution of Predictions</div>
+                        <div class="custom-subtitle">Leads are likely to:</div>
+                        <div style="display: flex; justify-content: center; gap: 100px;">
+                            <div style="text-align: center;">
+                                <span class="not-convert">NOT CONVERT</span>
+                                <div style="font-size: 24px; margin-top: 10px;">
+                                    {value_counts[0]} ({percentage_0:.1f}%)
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <span class="convert">CONVERT</span>
+                                <div style="font-size: 24px; margin-top: 10px;">
+                                    {value_counts[1]} ({percentage_1:.1f}%)
+                                </div>
+                            </div>
+                        </div>
+                        </br>
+                        <div style="text-align: center; 
+                                font-size: 20px;
+                                font-style: italic;
+                                color: var(--text-color);
+                                margin-bottom: 10px;">
+                            Total number of predictions: {total_count}
+                        </div>
+                    </div>
+                    <br>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # Create a DataFrame with input data, predictions and probabilities
+                results_df = combine_data(data_to_send, prediction, probability)
+
+                with st.expander("See prediction output and associated probability"):
+                    # Display the table
+                    st.write(results_df.loc[:, ["prediction", "probability"]])
+
+                # Export data to CSV or JSON
+                export_file_csv, export_file_json = export_data(results_df)
+                show_export_buttons(export_file_csv, export_file_json)
+
+            else:
+                st.error(f"Error in prediction: {response.status_code}")
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"Backend API request error: {e}")
 else:
     # --- Numerical Inputs --- #
     age = st.number_input(
@@ -295,6 +319,7 @@ else:
             "Digital Media Ads",
             "Educational Channels",
         ],
+        default=["Digital Media Ads"],
         help="Select the media or education channels through which the lead was acquired.",
     )
 
@@ -334,38 +359,57 @@ else:
 
     # Button to make prediction
     if st.button("Predict"):
-        response = requests.post(FASTAPI_URL, json=data_to_send, timeout=10)
+        try:
+            response = requests.post(FASTAPI_URL, json=data_to_send, timeout=10)
 
-        if response.status_code == 200:
-            prediction = response.json().get("prediction")
-            st.success(f"Prediction: {prediction}")
+            if response.status_code == 200:
+                prediction = response.json().get("prediction")
+                probability = response.json().get("probability")
+                st.success("Prediction successful!")
 
-            # Export input data and predictions to CSV
-            csv = export_to_csv(data_to_send, prediction)
-            st.download_button(
-                label="Download data as CSV",
-                data=csv,
-                file_name="predictions.csv",
-                mime="text/csv",
-            )
-        else:
-            st.error(f"Error in prediction: {response.status_code}")
+                # Display prediction result with formatted HTML
+                st.markdown(
+                    f"""
+                    <div class="custom-card">
+                        <div class="custom-title">Prediction Result</div>
+                        <div class="custom-subtitle">Lead is likely to:</div>
+                        <span class="prediction-text" style="color: {convert_color if prediction[0] == 1 else not_convert_color};">
+                            {'CONVERT' if prediction[0] == 1 else 'NOT CONVERT'}
+                        </span>
+                        <div class="probability-text">
+                            Estimated probability of {'converting' if prediction[0] == 1 else 'not converting'}: 
+                            {probability[0][1]*100 if prediction[0] == 1 else probability[0][0]*100:.1f}%
+                        </div>
+                    </div>
+                    <br>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # Create a DataFrame with input data, predictions and probabilities
+                results_df = combine_data(data_to_send, prediction, probability)
+
+                with st.expander("See prediction output and associated probability"):
+                    # Display the table
+                    st.write(results_df.loc[:, ["prediction", "probability"]])
+
+                # Export data to CSV or JSON
+                export_file_csv, export_file_json = export_data(results_df)
+                show_export_buttons(export_file_csv, export_file_json)
+
+            else:
+                st.error(f"Error in prediction: {response.status_code}")
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"Backend API request error: {e}")
 
 
 # ------------------ Footer Section -------------------- #
 # Horizontal line
-st.markdown("<hr style='border: 1px solid white;'>", unsafe_allow_html=True)
+display_divider()
 
 # Footer with copyright and timestamp
-current_year = datetime.datetime.now().year
-st.markdown(
-    f"""
-    <div style="text-align: center; font-size: small; color: gray;">
-        &copy; {current_year} Thomas Moesl. All rights reserved.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+display_footer()
 
 # -------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------- #
