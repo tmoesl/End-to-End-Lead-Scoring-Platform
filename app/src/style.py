@@ -99,12 +99,85 @@ def init_page_style():
         }}
 
         .custom-divider {{
-            border: none;
-            border-top: 1px solid var(--primary-color);
-            opacity: 0.3;
-            margin: 1.5rem 0;
+            height: 2px;
+            background: {line_color};
+            opacity: 0.9;
+            margin: 1.0rem 0;
+            border-radius: 2px;
         }}
         </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Function to initialize GitHub links styling
+def init_github_links_style():
+    """Initialize GitHub links styling."""
+    st.markdown(
+        f"""
+        <style>
+        .github-links {{
+            text-align: left;
+            margin-top: -5px;
+            margin-bottom: -30px;
+        }}
+        .github-text {{
+            font-size: 14px;
+            font-style: italic;
+            color: var(--text-color) !important;
+        }}
+        .github-link {{
+            color: var(--text-color) !important;
+            transition: opacity 0.4s;
+        }}
+        .github-link:hover {{
+            opacity: 0.7;
+            color: {line_color} !important;
+        }}
+        .github-separator {{
+            color: var(--text-color);
+            margin: 0 2px;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Function to display GitHub repository links
+def display_github_links():
+    """Display GitHub repository links."""
+    st.markdown(
+        """
+        <div class="github-links">
+            <span class="github-text">
+                <strong>GitHub Repositories:</strong> 
+                <a href="https://github.com/tmoesl/lead-conversion-prediction" 
+                   target="_blank" 
+                   class="github-link">Model Training & Evaluation</a>
+                <span class="github-separator">|</span>
+                <a href="https://github.com/tmoesl/lcp-aws-ec2" 
+                   target="_blank" 
+                   class="github-link">End-to-End Application Deployment</a>
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Function to display a 'Back to Top' link
+def display_back_to_top():
+    """Display a 'Back to Top' link. Identical formatting to display_github_links()."""
+    st.markdown(
+        """
+        <div class="github-links" style="text-align: right;">
+            <span class="github-text">
+                <a href="#ml-model-lead-conversion-prediction" 
+                   class="github-link">Get Back to Top</a>
+            </span>
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -114,7 +187,7 @@ def init_page_style():
 def display_divider():
     """Display a themed horizontal divider."""
     st.markdown(
-        f"<hr style='border: 1px solid {line_color};'>",
+        "<div class='custom-divider'></div>",
         unsafe_allow_html=True,
     )
 

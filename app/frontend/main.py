@@ -18,7 +18,15 @@ from pydantic import ValidationError
 # ------------------ Import Custom Modules ------------- #
 # Import class, style configuration and utility functions
 from src.config import PredictRequest
-from src.style import STYLE_CONFIG, init_page_style, display_divider, display_footer
+from src.style import (
+    STYLE_CONFIG,
+    init_page_style,
+    init_github_links_style,
+    display_github_links,
+    display_back_to_top,
+    display_divider,
+    display_footer,
+)
 from src.utils import combine_data, export_data, show_export_buttons
 
 
@@ -35,6 +43,7 @@ line_color = STYLE_CONFIG["LINE_COLOR"]
 
 # Initialize page styling
 init_page_style()
+init_github_links_style()
 
 
 # ------------------ Streamlit App --------------------- #
@@ -47,14 +56,26 @@ try:
 except Exception as e:
     st.error(f"Error loading banner image: {e}")
 
-# Description
+# Description Part I
 st.markdown(
     """
     This app utilizes an optimized Random Forest model to predict lead conversion for an EdTech startup,
     helping prioritize high-potential leads. By identifying key conversion drivers—such as website
     engagement, initial interaction channels, and profile completion—the model enables data-driven
     resource allocation to boost conversion rates and optimize marketing strategies.
+    """,
+    unsafe_allow_html=True,
+)
 
+# GitHub links
+display_github_links()
+
+# Horizontal line
+display_divider()
+
+# Description Part II
+st.markdown(
+    """
     ## App Features
     - **Input Lead Data**: Enter lead details manually or upload a JSON file.
     - **Make API Requests**: The app sends the input data to a trained Random Forest model.
@@ -403,6 +424,9 @@ else:
 
 
 # ------------------ Footer Section -------------------- #
+# Back to Top Button
+display_back_to_top()
+
 # Horizontal line
 display_divider()
 
