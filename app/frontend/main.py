@@ -78,7 +78,7 @@ display_divider()
 st.markdown(
     """
     ## App Features
-    - **Input Lead Data**: Enter lead details manually or upload a JSON file.
+    - **Input Lead Data**: Enter lead details manually, upload a JSON file or use sample data.
     - **Make API Requests**: The app sends the input data to a trained Random Forest model.
     - **Generate Predictions**: The model analyses lead data to assess conversion potential.
     - **Export Results**: Save predictions as a CSV file for further analysis and decision-making.
@@ -107,11 +107,11 @@ st.markdown("## Select Data Input Method")
 
 input_method = st.radio(
     "Choose how you want to provide data:",
-    ("Manual Input", "Upload JSON", "Use Template Data"),
+    ("Manual Input", "Upload JSON", "Use Sample Data"),
     index=0,
     help="**Manual Input**: Enter data manually through input fields. \
     \n**Upload JSON**: Upload a JSON file with lead data. \
-    \n**Use Template Data**: Use pre-filled sample data for testing.",
+    \n**Use Sample Data**: Use pre-filled sample data for testing.",
 )
 
 if input_method == "Upload JSON":
@@ -155,7 +155,7 @@ if input_method == "Upload JSON":
         except ValidationError as e:
             st.error(f"Validation error: {e}")
 
-elif input_method == "Use Template Data":
+elif input_method == "Use Sample Data":
 
     try:
         # Use sample JSON data directly
