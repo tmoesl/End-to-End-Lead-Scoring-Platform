@@ -2,7 +2,7 @@
 # Title: Streamlit App for ML Model Prediction
 # Description: App to interact with a trained Random Forest model via FastAPI.
 # Author: Thomas Moesl
-# Date: February 2025
+# Date: March 2025
 # -------------------------------------------------------------------------- #
 
 
