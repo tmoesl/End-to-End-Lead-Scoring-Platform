@@ -2,24 +2,23 @@
 # Title: FastAPI Application for ML Model
 # Description: This file contains the FastAPI application for the ML model.
 # Author: Thomas Moesl
-# Date: February 2025
+# Date: March 2025
 # -------------------------------------------------------------------------- #
 
 
 # ------------------ Import Libraries ------------------ #
 # Import the required libraries
-from fastapi import FastAPI, HTTPException
-from typing import List
-import pandas as pd
-import pickle
 import logging
-from pydantic import ValidationError
+import pickle
+from typing import List
 
+import pandas as pd
+from fastapi import FastAPI, HTTPException
+from pydantic import ValidationError
 
 # ------------------ Import Custom Modules ------------- #
 # Import the PredictRequest class
 from src.config import PredictRequest
-
 
 # ------------------ Logging --------------------------- #
 # Configure logging
