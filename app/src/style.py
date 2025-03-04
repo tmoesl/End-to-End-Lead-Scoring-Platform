@@ -105,6 +105,17 @@ def init_page_style():
             margin: 1.0rem 0;
             border-radius: 2px;
         }}
+
+        .rounded-image {{
+            border-radius: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 0.75rem; 
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -139,6 +150,13 @@ def init_github_links_style():
             color: var(--text-color);
             margin: 0 2px;
         }}
+        .github-icon {{
+            vertical-align: middle;
+            margin-right: 3px;
+            margin-bottom: 3px;
+            width: 13px; /* Adjusts size to match font */
+            height: 13px;
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -152,6 +170,8 @@ def display_github_links():
         """
         <div class="github-links">
             <span class="github-text">
+                <img src="/app/static/github_logo_white.png"
+                     alt="GitHub" class="github-icon">
                 <strong>GitHub Repositories:</strong> 
                 <a href="https://github.com/tmoesl/lead-conversion-prediction" 
                    target="_blank" 
