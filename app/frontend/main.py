@@ -82,21 +82,19 @@ display_divider()
 st.markdown(
     """
     ## App Features
-    - **Input Lead Data**: Enter lead details manually, upload a JSON file or use sample data.
-    - **Make API Requests**: The app sends the input data to a trained Random Forest model.
-    - **Generate Predictions**: The model analyses lead data to assess conversion potential.
-    - **Export Results**: Save predictions as a CSV file for further analysis and decision-making.
+    - **Data Analysis**: Process lead details to evaluate conversion likelihood.
+    - **AI-Powered Predictions**: Leverage a trained Random Forest model for real-time insights.
+    - **Seamless Export**: Save predictions for easy integration and analysis.
 
     ## Business Impact
-    - **Enhanced Lead Prioritization**: Focus on high-conversion leads to maximize ROI.
-    - **Optimized Marketing Strategies**: Tailor campaigns based on key conversion drivers.
-    - **Data-Driven Decision-Making**: Leverage insights to refine sales and marketing efforts.
+    - **Maximize ROI**: Focus on high-potential leads.
+    - **Optimize Marketing**: Tailor campaigns with key conversion drivers.
+    - **Drive Decisions**: Utilise data insights to refine sales strategies.
 
-    ## Instructions
-    1. Select the method of data input: manual input or JSON file upload.
-    2. Enter lead details or upload a JSON file containing multiple leads.
-    3. Click the 'Predict' button to generate conversion predictions.
-    4. View the prediction results and export the data for further analysis.
+    ## How It Works
+    1. Select a data input method and provide lead details.
+    2. Click **'Predict'** to generate lead conversion predictions.
+    3. Review and export results as CSV or JSON for further analysis.
     """,
     unsafe_allow_html=True,
 )
