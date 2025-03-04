@@ -56,10 +56,10 @@ init_github_links_style()
 st.title("ML Model | Lead Conversion Prediction")
 
 # Image
-try:
-    st.image("/app/utils/lcp_banner.png")  # Load image from mounted volume
-except Exception as e:
-    st.error(f"Error loading banner image: {e}")
+st.markdown(
+    '<img src="/app/static/lcp_banner.png" class="rounded-image">',
+    unsafe_allow_html=True,
+)
 
 # Description Part I
 st.markdown(
