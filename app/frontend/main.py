@@ -12,9 +12,7 @@ import json
 import os
 
 import pandas as pd
-import requests
 import streamlit as st
-from pydantic import ValidationError
 
 # ------------------ Import Custom Modules ------------- #
 # Import class, style configuration and utility functions
@@ -23,13 +21,19 @@ from src.style import (
     STYLE_CONFIG,
     display_back_to_top,
     display_divider,
+    display_export_buttons,
     display_footer,
     display_github_links,
     init_github_links_style,
     init_page_style,
 )
 from src.template import sample_json
-from src.utils import combine_data, export_data, show_export_buttons
+from src.utils import (
+    combine_data,
+    export_data,
+    make_prediction_request,
+    process_validate_input_data,
+)
 
 # ------------------ FastAPI Endpoint ------------------ #
 # Define the FastAPI endpoint
@@ -135,49 +139,37 @@ if input_method == "Upload JSON":
             # Read and parse the JSON file
             data = json.load(uploaded_file)
 
-            # Ensure the data is in the correct format (list of dictionaries)
-            if isinstance(data, dict):
-                data = [data]
+            # Prepare and validate the input data
+            data_to_send, error = process_validate_input_data(data)
 
-            # Validate the JSON structure using Pydantic
-            validated_data = [PredictRequest(**entry) for entry in data]
+            if error:
+                st.error(error)
+            else:
+                st.success("JSON data loaded successfully!")
 
-            # Serialize the data for API request
-            data_to_send = [entry.model_dump() for entry in validated_data]
-            st.success("JSON data loaded successfully!")
-
-            # Display the data for API request
-            with st.expander("Preview data to be sent to API"):
-                st.write(data_to_send)
+                # Display the data for API request
+                with st.expander("Preview data to be sent to API"):
+                    st.write(data_to_send)
 
         except json.JSONDecodeError:
             st.error("Invalid JSON file. Please upload a valid JSON file.")
-        except ValidationError as e:
-            st.error(f"Validation error: {e}")
 
 elif input_method == "Use Sample Data":
 
-    try:
-        # Use sample JSON data directly
-        data = sample_json
+    # Use sample JSON data directly
+    data = sample_json
 
-        # Ensure the data is in the correct format (list of dictionaries)
-        if isinstance(data, dict):
-            data = [data]
+    # Prepare and validate the input data
+    data_to_send, error = process_validate_input_data(data)
 
-        # Validate the JSON structure using Pydantic
-        validated_data = [PredictRequest(**entry) for entry in data]
-
-        # Serialize the data for API request
-        data_to_send = [entry.model_dump() for entry in validated_data]
+    if error:
+        st.error(error)
+    else:
         st.success("Sample data loaded successfully!")
 
         # Display the data for API request
         with st.expander("Preview data to be sent to API"):
             st.write(data_to_send)
-
-    except ValidationError as e:
-        st.error(f"Validation error: {e}")
 
 elif input_method == "Manual Input":
 
@@ -279,23 +271,15 @@ elif input_method == "Manual Input":
         }
     ]
 
-    try:
-        # Ensure the data is in the correct format (list of dictionaries)
-        if isinstance(data, dict):
-            data = [data]
+    # Prepare and validate the input data
+    data_to_send, error = process_validate_input_data(data)
 
-        # Validate the JSON structure using Pydantic
-        validated_data = [PredictRequest(**entry) for entry in data]
-
-        # Serialize the data for API request
-        data_to_send = [entry.model_dump() for entry in validated_data]
-
+    if error:
+        st.error(error)
+    else:
         # Display the data for API request
         with st.expander("Preview data to be sent to API"):
             st.write(data_to_send)
-
-    except ValidationError as e:
-        st.error(f"Validation error: {e}")
 
 
 # ------------------ Prediction Section ----------------- #
@@ -304,106 +288,115 @@ predict = st.button("Predict")
 
 if predict:
     if data_to_send is None:
-        st.info("Please upload a valid JSON file.")
+        # Map input methods to appropriate messages
+        input_messages = {
+            "Upload JSON": "Please upload a valid JSON file.",
+            "Use Sample Data": "There was an issue loading the sample data.",
+            "Manual Input": "Please complete the form with valid data.",
+        }
+
+        # Display the appropriate message based on selected input method
+        st.info(input_messages[input_method])
     else:
-        try:
-            response = requests.post(
-                FASTAPI_URL,
-                json=data_to_send,
-                timeout=10,
-            )
-            if response.status_code == 200:
-                prediction = response.json().get("prediction")
-                probability = response.json().get("probability")
-                st.success("Prediction successful!")
+        # Make a prediction request to the API
+        success, prediction, probability, error = make_prediction_request(
+            data_to_send, FASTAPI_URL
+        )
 
-                # Different display based on number of predictions
-                if len(prediction) == 1:
-                    # Display prediction result with formatted HTML
-                    st.markdown(
-                        f"""
-                        <div class="custom-card">
-                            <div class="custom-title">Prediction Result</div>
-                            <div class="custom-subtitle">Lead is likely to:</div>
-                            <span class="prediction-text" style="color: {convert_color if prediction[0] == 1 else not_convert_color};">
-                                {'CONVERT' if prediction[0] == 1 else 'NOT CONVERT'}
-                            </span>
-                            <div class="probability-text">
-                                Estimated probability of {'converting' if prediction[0] == 1 else 'not converting'}:
-                                {probability[0][1]*100 if prediction[0] == 1 else probability[0][0]*100:.1f}%
+        if not success:
+            st.error(error)
+        elif prediction is None or probability is None:
+            st.error("API response missing required data.")
+        else:
+            st.success("Prediction successful!")
+
+            if len(prediction) == 1:
+                # Display prediction result with formatted HTML
+                st.markdown(
+                    f"""
+                    <div class="custom-card">
+                        <div class="custom-title">Prediction Result</div>
+                        <div class="custom-subtitle">Lead is likely to:</div>
+                        <span class="prediction-text" style="color: {convert_color if prediction[0] == 1 else not_convert_color};">
+                            {'CONVERT' if prediction[0] == 1 else 'NOT CONVERT'}
+                        </span>
+                        <div class="probability-text">
+                            Estimated probability of {'converting' if prediction[0] == 1 else 'not converting'}:
+                            {probability[0][1]*100 if prediction[0] == 1 else probability[0][0]*100:.1f}%
+                        </div>
+                    </div>
+                    <br>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            else:
+                # Display distribution of predictions
+                prediction_series = pd.Series(prediction)
+                value_counts = prediction_series.value_counts().to_dict()
+
+                # Total number of predictions
+                total_count = len(prediction)
+
+                # Get counts for each class (0 and 1)
+                count_0 = value_counts.get(0, 0)  # Default value is 0
+                count_1 = value_counts.get(1, 0)  # Default value is 0
+                total = count_0 + count_1
+
+                # Calculate percentages (handle division by zero)
+                percentage_0 = (count_0 / total * 100) if total > 0 else 0
+                percentage_1 = (count_1 / total * 100) if total > 0 else 0
+
+                st.markdown(
+                    f"""
+                    <div class="custom-card">
+                        <div class="custom-title">Distribution of Predictions</div>
+                        <div class="custom-subtitle">Leads are likely to:</div>
+                        <div style="display: flex; justify-content: center; gap: 100px;">
+                            <div style="text-align: center;">
+                                <span class="not-convert">NOT CONVERT</span>
+                                <div style="font-size: 24px; margin-top: 10px;">
+                                    {count_0} ({percentage_0:.1f}%)
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <span class="convert">CONVERT</span>
+                                <div style="font-size: 24px; margin-top: 10px;">
+                                    {count_1} ({percentage_1:.1f}%)
+                                </div>
                             </div>
                         </div>
                         <br>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-
-                else:
-                    # Display distribution of predictions
-                    prediction_series = pd.Series(prediction)
-                    value_counts = prediction_series.value_counts().to_dict()
-
-                    # Total number of predictions
-                    total_count = len(prediction)
-
-                    # Get counts for each class (0 and 1)
-                    count_0 = value_counts.get(0, 0)  # Default value is 0
-                    count_1 = value_counts.get(1, 0)  # Default value is 0
-                    total = count_0 + count_1
-
-                    # Calculate percentages (handle division by zero)
-                    percentage_0 = (count_0 / total * 100) if total > 0 else 0
-                    percentage_1 = (count_1 / total * 100) if total > 0 else 0
-
-                    st.markdown(
-                        f"""
-                        <div class="custom-card">
-                            <div class="custom-title">Distribution of Predictions</div>
-                            <div class="custom-subtitle">Leads are likely to:</div>
-                            <div style="display: flex; justify-content: center; gap: 100px;">
-                                <div style="text-align: center;">
-                                    <span class="not-convert">NOT CONVERT</span>
-                                    <div style="font-size: 24px; margin-top: 10px;">
-                                        {count_0} ({percentage_0:.1f}%)
-                                    </div>
-                                </div>
-                                <div style="text-align: center;">
-                                    <span class="convert">CONVERT</span>
-                                    <div style="font-size: 24px; margin-top: 10px;">
-                                        {count_1} ({percentage_1:.1f}%)
-                                    </div>
-                                </div>
-                            </div>
-                            </br>
-                            <div style="text-align: center; 
-                                    font-size: 20px;
-                                    font-style: italic;
-                                    color: var(--text-color);
-                                    margin-bottom: 10px;">
-                                Total number of predictions: {total_count}
-                            </div>
+                        <div style="text-align: center; 
+                                font-size: 20px;
+                                font-style: italic;
+                                color: var(--text-color);
+                                margin-bottom: 10px;">
+                            Total number of predictions: {total_count}
                         </div>
-                        <br>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                    </div>
+                    <br>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-                # Create a DataFrame with input data, predictions and probabilities
-                results_df = combine_data(data_to_send, prediction, probability)
+            # Create a DataFrame with input data, predictions and probabilities
+            results_df, error = combine_data(data_to_send, prediction, probability)
 
+            if error:
+                st.error(error)
+            else:
+                # Only proceed if data was combined successfully
                 with st.expander("See prediction output and associated probability"):
-                    # Display the table
                     st.write(results_df.loc[:, ["prediction", "probability"]])
 
                 # Export data to CSV or JSON
-                export_file_csv, export_file_json = export_data(results_df)
-                show_export_buttons(export_file_csv, export_file_json)
+                csv_data, json_data, error = export_data(results_df)
 
-            else:
-                st.error(f"Error in prediction: {response.status_code}")
-
-        except requests.exceptions.RequestException as e:
-            st.error(f"Backend API request error: {e}")
+                if error:
+                    st.error(error)
+                else:
+                    display_export_buttons(csv_data, json_data)
 
 
 # ------------------ Footer Section -------------------- #
