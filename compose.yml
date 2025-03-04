@@ -41,8 +41,8 @@ services:
         target: /app/src
         read_only: true
       - type: bind
-        source: ./app/frontend/utils/lcp_banner.png
-        target: /app/utils/lcp_banner.png
+        source: ./app/frontend/static
+        target: /app/static
         read_only: true
       - type: bind
         source: ./app/.streamlit
