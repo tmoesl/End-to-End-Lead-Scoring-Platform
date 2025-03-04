@@ -2,15 +2,15 @@
 # Title: Style Configuration for Streamlit App
 # Description: This file contains style configurations for the Streamlit app.
 # Author: Thomas Moesl
-# Date: February 2025
+# Date: March 2025
 # -------------------------------------------------------------------------- #
 
 
 # ------------------ Import Libraries ------------------ #
 # Import the required libraries
-import streamlit as st
 import datetime
 
+import streamlit as st
 
 # ---------------- Style Configuration ----------------- #
 # Define style configuration
@@ -205,6 +205,44 @@ def display_footer():
         """,
         unsafe_allow_html=True,
     )
+
+
+# Function to display download buttons for CSV and JSON exports
+def display_export_buttons(csv_data, json_data):
+    """Display download buttons in the UI.
+
+    Args:
+        csv_data: The CSV data to export
+        json_data: The JSON data to export
+
+    Returns:
+        None
+    """
+    if csv_data is None or json_data is None:
+        st.error("No data available for export.")
+        return
+
+    # Create columns for buttons
+    scol1, bcol1, scol2 = st.columns([1.6, 2.8, 1.6])
+
+    with bcol1:  # This column holds both buttons together
+        btn1_col, btn2_col = st.columns([1, 1])  # Equal spacing between buttons
+
+    with btn1_col:
+        st.download_button(
+            label="Export to CSV",
+            data=csv_data,
+            file_name="predictions.csv",
+            mime="text/csv",
+        )
+
+    with btn2_col:
+        st.download_button(
+            label="Export to JSON",
+            data=json_data,
+            file_name="predictions.json",
+            mime="application/json",
+        )
 
 
 # -------------------------------------------------------------------------- #
