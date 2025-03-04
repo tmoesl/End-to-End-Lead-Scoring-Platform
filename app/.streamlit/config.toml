@@ -2,11 +2,11 @@
 # Title: Streamlit Configuration
 # Description: This file contains key configuration for the Streamlit app.
 # Author: Thomas Moesl
-# Date: February 2025
+# Date: March 2025
 # -------------------------------------------------------------------------- #
 
 [theme]
-base = "dark"
+base = "dark"                           # Use dark mode as the default theme
 primaryColor = "#FF914D"                # Warm orange for high-visibility elements (buttons, highlights)
 backgroundColor = "#1B1F24"             # Deep charcoal for a sleek, modern contrast
 secondaryBackgroundColor = "#2E2F38"    # Muted dark gray for subtle section differentiation
@@ -17,16 +17,17 @@ font = "sans serif"                     # Clean and modern typography for improv
 port = 8501                             # Default port for app
 address = "0.0.0.0"                     # Default address for app
 maxUploadSize = 200                     # Set max file upload size to 200MB
+enableStaticServing = true              # Enable serving static files via URL
 
 [client]
 showSidebarNavigation = false           # Hide sidebar navigation for a cleaner UI
-toolbarMode = "minimal"
+toolbarMode = "minimal"                 # Show a minimal toolbar in the Streamlit UI
 
 [logger]
-level = "info"  # Log level: debug, info, warning, error
+level = "info"                          # Set log level to info (options: debug, info, warning, error)
 
 [ui]
-hideTopBar = true
+hideTopBar = true                       # Hide the top navigation bar for a more immersive UI
 
 
 # -------------------------------------------------------------------------- #
