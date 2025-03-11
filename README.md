@@ -1,4 +1,4 @@
-![EdTech Banner](/app/frontend/static/lspbanner.png)
+
 
 # End-to-End Lead Scoring Platform
 
