@@ -3,6 +3,8 @@
 # End-to-End Lead Scoring Platform
 
 ![Status](https://img.shields.io/badge/-Completed-34A853?style=flat&label=Project&labelColor=23555555)
+![Languages](https://img.shields.io/github/languages/count/tmoesl/End-to-End-Lead-Scoring-Platform?label=Languages)
+![Top Language](https://img.shields.io/github/languages/top/tmoesl/End-to-End-Lead-Scoring-Platform?color=white)
 
 ## Executive Summary
 
